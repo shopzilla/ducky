@@ -1,0 +1,224 @@
+<application xmlns="http://research.sun.com/wadl/2006/10"
+             xmlns:xs="http://www.w3.org/2001/XMLSchema"
+             xmlns:prefix1="http://www.shopzilla.com/services/email-subscription">
+  <grammars>
+    <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+               xmlns:tns="http://www.shopzilla.com/services/email-subscription"
+               attributeFormDefault="unqualified" elementFormDefault="qualified"
+               targetNamespace="http://www.shopzilla.com/services/email-subscription">
+      <xs:element name="Attribute">
+        <xs:complexType>
+          <xs:sequence/>
+          <xs:attribute ref="tns:id"/>
+          <xs:attribute ref="tns:value"/>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="Interests">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" name="keyword" type="xs:string"/>
+            <xs:element maxOccurs="unbounded" minOccurs="0" ref="tns:Attribute"/>
+            <xs:element maxOccurs="unbounded" minOccurs="0" name="categoryId" type="xs:long"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="ResponseMetadata">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element maxOccurs="unbounded" minOccurs="0" name="Service">
+              <xs:complexType>
+                <xs:sequence>
+                  <xs:element name="Name" type="xs:string"/>
+                  <xs:element name="URL" type="xs:string"/>
+                </xs:sequence>
+              </xs:complexType>
+            </xs:element>
+            <xs:element minOccurs="0" name="Hostname" type="xs:string"/>
+            <xs:element minOccurs="0" name="OwnershipIdentifier" type="xs:string"/>
+            <xs:element name="StatusCode" type="xs:int"/>
+            <xs:element name="Message" type="xs:string"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="Schedule">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" name="DayOfWeek" type="xs:int"/>
+            <xs:element minOccurs="0" name="DayOfMonth" type="xs:int"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="Scheduled">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element maxOccurs="unbounded" minOccurs="0" ref="tns:Schedule"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="Subscription">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element ref="tns:SubscriptionType"/>
+            <xs:element ref="tns:SubscriptionStatus"/>
+            <xs:element maxOccurs="unbounded" minOccurs="0" ref="tns:Scheduled"/>
+            <xs:element minOccurs="0" ref="tns:Interests"/>
+          </xs:sequence>
+          <xs:attribute ref="tns:id"/>
+          <xs:attribute ref="tns:name"/>
+          <xs:attribute ref="tns:contentLastGenerationDate"/>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="SubscriptionOptOut">
+        <xs:complexType>
+          <xs:sequence/>
+          <xs:attribute ref="tns:userId"/>
+          <xs:attribute ref="tns:accountId"/>
+          <xs:attribute ref="tns:doNotEmail" use="required"/>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="SubscriptionOptOutResponse">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" ref="tns:SubscriptionOptOut"/>
+            <xs:element minOccurs="0" ref="tns:ResponseMetadata"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="SubscriptionStatus">
+        <xs:complexType>
+          <xs:sequence/>
+          <xs:attribute ref="tns:name"/>
+          <xs:attribute ref="tns:subscriptionStatusId"/>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="SubscriptionType">
+        <xs:complexType>
+          <xs:sequence/>
+          <xs:attribute ref="tns:source"/>
+          <xs:attribute ref="tns:subscriptionTypeId"/>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="Subscriptions">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element maxOccurs="unbounded" minOccurs="0" ref="tns:Subscription"/>
+          </xs:sequence>
+          <xs:attribute ref="tns:userId" use="required"/>
+          <xs:attribute ref="tns:accountId" use="required"/>
+          <xs:attribute ref="tns:emailAddress" use="required"/>
+          <xs:attribute ref="tns:nickname"/>
+          <xs:attribute ref="tns:doNotEmail" use="required"/>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="SubscriptionsResponse">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element maxOccurs="unbounded" minOccurs="0" ref="tns:Subscriptions"/>
+            <xs:element minOccurs="0" ref="tns:ResponseMetadata"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:attribute name="accountId" type="xs:string"/>
+      <xs:attribute name="contentLastGenerationDate" type="xs:dateTime"/>
+      <xs:attribute name="doNotEmail" type="xs:string"/>
+      <xs:attribute name="emailAddress" type="xs:string"/>
+      <xs:attribute name="id" type="xs:string"/>
+      <xs:attribute name="name" type="xs:string"/>
+      <xs:attribute name="nickname" type="xs:string"/>
+      <xs:attribute name="source" type="xs:string"/>
+      <xs:attribute name="subscriptionStatusId" type="xs:int"/>
+      <xs:attribute name="subscriptionTypeId" type="xs:int"/>
+      <xs:attribute name="userId" type="xs:string"/>
+      <xs:attribute name="value" type="xs:string"/>
+    </xs:schema>
+  </grammars>
+  <resources base="http://localhost:7118/services/subscriptions">
+    <resource path="/">
+      <doc title="Email Subscription Service">Service for managing email subscription data for
+        users
+      </doc>
+      <resource path="{source}/day/{dayOfWeek}">
+        <param name="source" style="template" type="xs:string"/>
+        <param name="dayOfWeek" style="template" type="xs:int"/>
+        <method name="GET">
+          <request>
+            <param name="subscriptionType" style="query" type="xs:int"/>
+          </request>
+          <response>
+            <representation mediaType="application/xml" element="prefix1:SubscriptionsResponse"/>
+          </response>
+        </method>
+      </resource>
+      <resource path="{source}/user/{userId}">
+        <param name="source" style="template" type="xs:string"/>
+        <param name="userId" style="template" type="xs:string"/>
+        <method name="GET">
+          <doc title="Subscriptions By Source and Day of Week">Returns a list of user email
+            subscriptions for a given source and day of week.
+          </doc>
+          <request>
+            <param name="ownershipIdentifier" style="query" type="xs:string"/>
+            <param name="subscriptionType" style="query" type="xs:int"/>
+          </request>
+          <response>
+            <representation mediaType="application/xml" element="prefix1:SubscriptionsResponse"/>
+          </response>
+        </method>
+      </resource>
+      <resource path="{source}/user/{userId}/opt-out">
+        <param name="source" style="template" type="xs:string"/>
+        <param name="userId" style="template" type="xs:string"/>
+        <method name="GET">
+          <request>
+            <param name="ownershipIdentifier" style="query" type="xs:string"/>
+          </request>
+          <response>
+            <representation mediaType="application/xml"
+                            element="prefix1:SubscriptionOptOutResponse"/>
+          </response>
+        </method>
+        <method name="POST">
+          <request>
+            <param name="ownershipIdentifier" style="query" type="xs:string"/>
+            <representation mediaType="*/*"/>
+          </request>
+          <response>
+            <representation mediaType="application/xml"
+                            element="prefix1:SubscriptionOptOutResponse"/>
+          </response>
+        </method>
+      </resource>
+      <resource path="{source}/user/{userId}/subscription/{subscriptionId}">
+        <param name="source" style="template" type="xs:string"/>
+        <param name="userId" style="template" type="xs:string"/>
+        <param name="subscriptionId" style="template"/>
+        <method name="DELETE">
+          <request>
+            <param name="ownershipIdentifier" style="query" type="xs:string"/>
+          </request>
+          <response>
+            <representation mediaType="application/xml" element="prefix1:SubscriptionsResponse"/>
+          </response>
+        </method>
+        <method name="GET">
+          <request>
+            <param name="ownershipIdentifier" style="query" type="xs:string"/>
+          </request>
+          <response>
+            <representation mediaType="application/xml" element="prefix1:SubscriptionsResponse"/>
+          </response>
+        </method>
+        <method name="POST">
+          <request>
+            <param name="accountId" style="query" type="xs:long"/>
+            <param name="ownershipIdentifier" style="query" type="xs:string"/>
+            <representation mediaType="*/*"/>
+          </request>
+          <response>
+            <representation mediaType="application/xml" element="prefix1:SubscriptionsResponse"/>
+          </response>
+        </method>
+      </resource>
+    </resource>
+  </resources>
+</application>

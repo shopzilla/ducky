@@ -340,7 +340,7 @@
             margin-top: 10px;
             padding: 5px;
             border: #cccccc solid 1px;
-            width: 50%;
+            /*width: 50%;*/
           }
 
           .formToggle {
@@ -444,14 +444,9 @@
 
   <xsl:template match="wadl:resources" mode="toc">
     <xsl:variable name="base">
-      <xsl:choose>
-        <xsl:when test="substring(@base, string-length(@base), 1) = '/'">
-          <xsl:value-of select="substring(@base, 1, string-length(@base) - 1)"/>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:value-of select="@base"/>
-        </xsl:otherwise>
-      </xsl:choose>
+      <xsl:call-template name="chop-trailing-slash">
+                <xsl:with-param name="pathParam" select="@base"/>
+      </xsl:call-template>
     </xsl:variable>
     <ul>
       <xsl:apply-templates select="wadl:resource" mode="toc">
@@ -642,7 +637,6 @@
     <xsl:apply-templates select="." mode="form-param-group">
       <xsl:with-param name="context" select="$context"/>
       <xsl:with-param name="prefix">request</xsl:with-param>
-      <xsl:with-param name="style">query</xsl:with-param>
     </xsl:apply-templates>
   </xsl:template>
 
@@ -739,15 +733,16 @@
 
   <xsl:template match="wadl:*" mode="form-param-group">
     <xsl:param name="context"/>
-    <xsl:param name="style"/>
+    <!--<xsl:param name="style"/>-->
     <xsl:param name="prefix"/>
     <xsl:variable name="id">
       <xsl:call-template name="get-id"/>
     </xsl:variable>
-    <xsl:if test="ancestor-or-self::wadl:*/wadl:param[@style=$style]">
+    <!--<xsl:if test="ancestor-or-self::wadl:*/wadl:param[@style=$style]">-->
+    <xsl:if test="ancestor-or-self::wadl:*/wadl:param">  
       <div class="testFormBox">
         <a id="link-{$id}" class="formToggle"
-           href="javascript:toggleVisibility('link-{$id}', 'form-{$id}');">[ + ] show test form
+           href="javascript:toggleVisibility('link-{$id}', 'form-{$id}');">[ + ] show form
         </a>
 
         <form class="testForm" id="form-{$id}" style="visibility: hidden; display: none">
@@ -774,13 +769,55 @@
               <th>value</th>
               <th>input</th>
             </tr>
-            <xsl:apply-templates select="ancestor-or-self::wadl:*/wadl:param[@style=$style]"
+            <!--<xsl:apply-templates select="ancestor-or-self::wadl:*/wadl:param[@style=$style]"-->
+                                 <!--mode="form-param"/>-->
+             <xsl:apply-templates select="ancestor-or-self::wadl:*/wadl:param"
                                  mode="form-param"/>
+
+             <xsl:apply-templates select="."
+                                 mode="form-request-body"/>
           </table>
           <input type="submit"/>
         </form>
       </div>
     </xsl:if>
+  </xsl:template>
+
+  <xsl:template match="wadl:request" mode="form-request-body">
+    <xsl:choose>
+      <xsl:when test="ancestor-or-self::wadl:*/wadl:representation">
+        <tr>
+          <td>
+            <p>
+              <strong>
+                request body
+              </strong>
+            </p>
+          </td>
+          <td>
+            <xsl:apply-templates select="ancestor-or-self::wadl:*/wadl:representation"
+                                 mode="form-representation-name"/>
+          </td>
+          <td>
+            <textarea rows="10" cols="35" name="requestBody">
+            </textarea>
+          </td>
+        </tr>
+      </xsl:when>
+    </xsl:choose>
+  </xsl:template>
+
+  <xsl:template match="wadl:representation" mode="form-representation-name">
+    <xsl:variable name="id">
+      <xsl:call-template name="get-id"/>
+    </xsl:variable>
+    <p>
+      <em>
+        <a href="#{$id}">
+          <xsl:call-template name="representation-name"/>
+        </a>
+      </em>
+    </p>
   </xsl:template>
 
   <xsl:template match="wadl:param">

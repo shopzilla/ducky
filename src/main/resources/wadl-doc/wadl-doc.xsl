@@ -310,7 +310,7 @@
           td {
             padding: 3px 6px;
             vertical-align: top;
-            background-color: f6f6ff;
+            background-color: #f6f6ff;
             font-size: 0.85em;
           }
 
@@ -336,11 +336,41 @@
             padding: 10px;
           }
 
+          .testFormOutputOk, .testFormOutputError {
+            margin: 5px;
+            padding: 2px;
+            text-align: right;
+            background-color: #ffffff;
+          }
+
+          .testFormOutputOk {
+            border: #00cc00 dotted 1px;
+          }
+
+          .testFormOutputError {
+            border: #ff0000 dotted 1px;
+          }
+
+          .testFormOutputData {
+            color: #000000;
+            font-family: andale mono, mono-type;  
+          }
+
+          a.formControl:link, a.formControl:visited, a.formToggle:link, a.formToggle:visited {
+            text-decoration: none;
+          }
+
+          .testFormOutputData {
+            margin: 10px;
+            padding: 10px;
+            text-align: left;
+
+          }
+
           .testForm {
             margin-top: 10px;
             padding: 5px;
-            border: #cccccc solid 1px;
-            /*width: 50%;*/
+            border: #cccccc solid 1px; /*width: 50%;*/
           }
 
           .formToggle {
@@ -361,31 +391,208 @@
           <xsl:comment>
             <![CDATA[
 
-                  /*
-                   * Toggle the visibility and display state of an anchor element and a form element.
-                   * Takes two parameters:
-                   * 	anchorId - the id of an anchor tag that the user clicks on to invoke this function
-                   *  formId - the id of a corresponding form tag which we are going to make visible or invisible.
-                   */
-                  function toggleVisibility(anchorId, formId) {
-                    anchor = document.getElementById(anchorId);
-                    form = document.getElementById(formId);
+                 function Parameter(name, value) {
+                    this.name=name;
+                    this.value=value;
+                 }
+
+                 Parameter.prototype.toString = function() {
+                    if(this.value) {
+                      return this.name + '=' + window.escape(this.value);
+                    }
+                    return this.name;
+                 }
+
+                 function UrlBuilder(actionUrl) {
+                    this.actionUrl = actionUrl;
+                    this.templateParams = new Array();
+                    this.queryParams = new Array();
+                    this.matrixParams = new Array();
+                 }
+
+                 UrlBuilder.prototype.addTemplateParam = function(name, value) {
+                    this.templateParams.push(new Parameter(name, value))
+                 }
+
+                 UrlBuilder.prototype.addQueryParam = function(name, value) {
+                    this.queryParams.push(new Parameter(name, value))
+                 }
+                 
+                 UrlBuilder.prototype.addMatrixParam = function(name, value) {
+                    this.matrixParams.push(new Parameter(name, value))
+                 }
+
+                 UrlBuilder.prototype.buildUrl = function() {
+
+                    finalAction = this.actionUrl;
+
+                    // put in template params  
+                    for(i=0; i < this.templateParams.length; i++) {
+                      p = this.templateParams[i];
+                      if(p.value) {
+                        finalAction = finalAction.replace('{' + p.name + '}', window.escape(p.value));
+                      }
+                    }
+
+
+                    // add matrix params
+                    if(this.matrixParams.length > 0) {
+                      finalAction = UrlBuilder.addIfNotPresent(finalAction, '/');
+                      finalAction += this.matrixParams.join(';');
+                    }
+
+
+                    // add query params
+                    if(this.queryParams.length > 0) {
+                      finalAction = UrlBuilder.addIfNotPresent(finalAction, '?');
+                      finalAction += this.queryParams.join('&');
+                    }
+
+                    return finalAction;
+                 }
+
+                 UrlBuilder.addIfNotPresent = function(path, char) {
+                    if(path[path.length-1] != char) {
+                      return path + char;  
+                    }
+                 }
+
+                 function WADLForm(formId) {
+                    this.formId=formId;
+                    this.paramTypes = new Array();
+                    this.contentType = null;
+                 }
+
+
+                 WADLForm.prototype.closeOutput = function() {
+                      outerPanel = document.getElementById('form-' + this.formId+"-output");
+                      outerPanel.style.visibility = 'hidden';
+                      outerPanel.style.display = 'none';
+                  }
+
+                 WADLForm.prototype.toggleForm = function() {
+                    anchor = document.getElementById('link-' + this.formId);
+                    form = document.getElementById('form-' + this.formId);
                     if (anchor != null && form != null) {
                       if(form.style.visibility == 'hidden') {
                         form.style.visibility = 'visible';
                         form.style.display = 'block';
-                        anchor.innerHTML = anchor.innerHTML.replace('+', '-').replace('show', 'hide');
+                        anchor.innerHTML = anchor.innerHTML.replace('+', 'x').replace('show', 'hide');
                       } else {
+                        this.closeOutput();
                         form.style.visibility = 'hidden';
                         form.style.display = 'none';
-                        anchor.innerHTML=anchor.innerHTML.replace('-', '+').replace('hide', 'show');
+                        anchor.innerHTML=anchor.innerHTML.replace('x', '+').replace('hide', 'show');
                       }
 
                     }
+                 }
+
+
+                 WADLForm.prototype.showOutput = function(responseData, isOk) {
+
+                    dataNode = document.createTextNode(responseData);
+                    innerPanel = document.getElementById('form-' + this.formId + '-output-data');
+
+                    if(innerPanel.childNodes.length > 0) {
+                      innerPanel.replaceChild(dataNode, innerPanel.childNodes[0]);
+                    } else {
+                      innerPanel.appendChild(dataNode);
+                    }
+
+                    outerPanel = document.getElementById('form-' + this.formId + '-output');
+                    outerPanel.style.visibility = 'visible';
+                    outerPanel.style.display = 'block';
+
+                    if(isOk) {
+                      outerPanel.setAttribute("class", "testFormOutputOk");
+                    } else {
+                      outerPanel.setAttribute("class", "testFormOutputError");
+                    }
+
                   }
 
+                  WADLForm.prototype.addInput = function(inputName, paramType) {
+                    this.paramTypes[inputName] = paramType.toLowerCase();
+                  }
+
+                  WADLForm.prototype.setContentType = function(contentType) {
+                      this.contentType = contentType;
+                  }
+
+
+
+                  WADLForm.prototype.submit = function() {
+
+                    form = document.getElementById('form-'+this.formId);
+
+                    action = form.getAttribute('action');
+                    method = form.getAttribute('method').toLowerCase();
+
+                    builder = new UrlBuilder(action);
+                    req = new XMLHttpRequest();
+
+                    inputs = form.getElementsByTagName('input');
+
+                    for(i=0; i < inputs.length; i++) {
+                      x = inputs[i];
+                      name = x.getAttribute('name');
+                      type = this.paramTypes[name];
+                      if(type) {
+
+                        if(type == 'query') {
+                          builder.addQueryParam(name, x.value);
+                        } else if (type == 'template') {
+                          builder.addTemplateParam(name, x.value);
+                        } else  if (type == 'matrix') {
+                          builder.addMatrixParam(name, x.value);
+                        } else  if (type == 'header') {
+                          req.setRequestHeader(name, x.value);
+                        }
+
+                      }
+
+                    }
+
+                    try {
+
+                      finalUrl = builder.buildUrl();
+
+                      requestBody = document.getElementById('form-'+this.formId+'-request-body');
+                      
+                      if(requestBody && requestBody.value && this.contentType) {
+                      
+                        req.setRequestHeader('Content-Type', this.contentType);
+                        req.open(method, finalUrl, false);
+                        req.send(requestBody.value);
+
+                      } else {
+                      
+                        req.open(method, finalUrl, false);
+                        req.send(null);
+
+                      }
+                    
+
+                      if(req.status && req.status > 199 && req.status < 300) {
+                        this.showOutput(req.responseText, true);
+                      } else {
+                        this.showOutput("Error requesting '" + finalUrl +"', Status: " + req.status + " - " + req.statusText
+                          + "; " + req.responseText, false);
+
+                      }
+                      
+                    } catch(e) {
+                        this.showOutput("Error requesting '" + finalUrl + "':   " +  e, false);
+                    }
+
+                  }
+
+
+
+                 
                   ]]>
-          </xsl:comment>
+          //</xsl:comment>
         </script>
 
       </head>
@@ -741,9 +948,18 @@
     <!--<xsl:if test="ancestor-or-self::wadl:*/wadl:param[@style=$style]">-->
     <xsl:if test="ancestor-or-self::wadl:*/wadl:param">  
       <div class="testFormBox">
-        <a id="link-{$id}" class="formToggle"
-           href="javascript:toggleVisibility('link-{$id}', 'form-{$id}');">[ + ] show form
+
+        <script type="text/javascript">
+          <xsl:comment>
+            var form_<xsl:value-of select="$id"/> = new WADLForm('<xsl:value-of select="$id"/>'); 
+          //</xsl:comment>
+        </script>
+        <a id="link-{$id}" class="formToggle">
+          <xsl:attribute name="href">javascript:form_<xsl:value-of select="$id"/>.toggleForm();</xsl:attribute>
+          [ + ] show form
         </a>
+
+
 
         <form class="testForm" id="form-{$id}" style="visibility: hidden; display: none">
           <xsl:attribute name="action">
@@ -769,21 +985,42 @@
               <th>value</th>
               <th>input</th>
             </tr>
-            <!--<xsl:apply-templates select="ancestor-or-self::wadl:*/wadl:param[@style=$style]"-->
-                                 <!--mode="form-param"/>-->
+
              <xsl:apply-templates select="ancestor-or-self::wadl:*/wadl:param"
                                  mode="form-param"/>
 
              <xsl:apply-templates select="."
-                                 mode="form-request-body"/>
+                                 mode="form-request-body">
+              <xsl:with-param name="formId" select="$id"/>  
+             </xsl:apply-templates>
           </table>
-          <input type="submit"/>
+
+          <!-- setting up configuration for the form submit -->
+          <script type="text/javascript">
+            <xsl:comment>
+              <xsl:apply-templates select="ancestor-or-self::wadl:*/wadl:param"
+                                 mode="form-param-config">
+                <xsl:with-param name="formId" select="$id"/>
+              </xsl:apply-templates>
+            //</xsl:comment>
+          </script>
+
+          <input type="button" value="submit">
+            <xsl:attribute name="onclick">form_<xsl:value-of select="$id"/>.submit();</xsl:attribute>
+          </input>
         </form>
+        <div class="testFormOutputOk" id="form-{$id}-output" style="visibility: hidden; display: none">
+          <a class="formControl"><xsl:attribute name="href">javascript:form_<xsl:value-of select="$id"/>.closeOutput();</xsl:attribute>[ x ]</a>
+          <div class="testFormOutputData" id="form-{$id}-output-data">
+          <!-- empty until we fill with response output -->
+          </div>
+        </div>
       </div>
     </xsl:if>
   </xsl:template>
 
   <xsl:template match="wadl:request" mode="form-request-body">
+    <xsl:param name="formId"/>
     <xsl:choose>
       <xsl:when test="ancestor-or-self::wadl:*/wadl:representation">
         <tr>
@@ -795,11 +1032,19 @@
             </p>
           </td>
           <td>
+          
             <xsl:apply-templates select="ancestor-or-self::wadl:*/wadl:representation"
-                                 mode="form-representation-name"/>
+                                 mode="form-representation-name">
+              <xsl:with-param name="formId" select="$formId"/>
+            </xsl:apply-templates>
           </td>
           <td>
-            <textarea rows="10" cols="35" name="requestBody">
+            <textarea rows="10" cols="35">
+              <xsl:attribute name="name">form-<xsl:value-of select="$formId"/>-request-body</xsl:attribute>
+              <!-- Generate an example of the first listed representation -->
+              <xsl:apply-templates select="ancestor-or-self::wadl:*/wadl:representation[1]"
+                                 mode="form-representation-example"/>
+
             </textarea>
           </td>
         </tr>
@@ -808,17 +1053,50 @@
   </xsl:template>
 
   <xsl:template match="wadl:representation" mode="form-representation-name">
+    <xsl:param name="formId"/>
     <xsl:variable name="id">
       <xsl:call-template name="get-id"/>
     </xsl:variable>
     <p>
       <em>
+        <xsl:choose>
+          <xsl:when test="@mediaType">
+            <input type="radio">
+              <xsl:attribute name="name">form-<xsl:value-of select="$formId"/>-content-type</xsl:attribute>
+              <xsl:attribute name="value"><xsl:value-of select="@mediaType"/></xsl:attribute>
+              <xsl:attribute name="onclick">form_<xsl:value-of select="$formId"/>.setContentType(this.value);</xsl:attribute>
+              <xsl:choose>
+              <xsl:when test="position() = 1"><xsl:attribute name="checked">checked</xsl:attribute></xsl:when>
+              </xsl:choose>
+            </input>
+            <xsl:choose>
+              <xsl:when test="position() = 1">
+                <script type="text/javascript">
+                  <!-- setting initial values -->
+                  <xsl:comment>
+                  form_<xsl:value-of select="$formId"/>.setContentType('<xsl:value-of select="@mediaType"/>');
+                  //</xsl:comment>
+                </script>
+              </xsl:when>
+            </xsl:choose>
+          </xsl:when>
+        </xsl:choose>
         <a href="#{$id}">
           <xsl:call-template name="representation-name"/>
         </a>
       </em>
     </p>
   </xsl:template>
+
+  <xsl:template match="wadl:representation" mode="form-representation-example">
+    <xsl:if test="@element">
+      <xsl:call-template name="generate-element">
+        <xsl:with-param name="context" select="."/>
+        <xsl:with-param name="qname" select="@element"/>
+    </xsl:call-template>
+    </xsl:if>
+  </xsl:template>
+
 
   <xsl:template match="wadl:param">
     <tr>
@@ -968,6 +1246,14 @@
     </tr>
   </xsl:template>
 
+
+  <xsl:template match="wadl:param" mode="form-param-config">
+    <xsl:param name="formId"/>
+    <!-- making note of the parameter's "style" for the JavaScript layer -->
+    form_<xsl:value-of select="$formId"/>.addInput('<xsl:value-of select="@name"/>','<xsl:value-of select="@style"/>');
+  </xsl:template>
+
+
   <xsl:template match="wadl:link">
     <li>
       Link:
@@ -1099,6 +1385,23 @@
     </pre>
   </xsl:template>
 
+
+  <xsl:template name="generate-element">
+    <xsl:param name="context" select="."/>
+    <xsl:param name="qname"/>
+    <xsl:variable name="ns-uri">
+      <xsl:call-template name="get-namespace-uri">
+        <xsl:with-param name="context" select="$context"/>
+        <xsl:with-param name="qname" select="$qname"/>
+      </xsl:call-template>
+    </xsl:variable>
+    <xsl:variable name="localname" select="substring-after($qname, ':')"/>
+    <xsl:variable name="definition"
+                  select="exsl:node-set($grammars)/descendant::xs:element[@name=$localname][ancestor-or-self::*[@targetNamespace=$ns-uri]]"/>
+   
+    <xsl:apply-templates select="$definition" mode="generate"/>
+  </xsl:template>
+
   <xsl:template name="link-qname">
     <xsl:param name="context" select="."/>
     <xsl:param name="qname"/>
@@ -1202,6 +1505,48 @@
   </xsl:template>
 
   <xsl:template match="text()" mode="encode">
+    <xsl:value-of select="." xml:space="preserve"/>
+  </xsl:template>
+
+
+  <xsl:template match="xs:element" mode="generate">
+
+    <xsl:choose>
+    <xsl:when test="@name">
+    <xsl:text>&lt;</xsl:text>  
+    <xsl:value-of select="@name"/>
+    <!--<xsl:apply-templates select="attribute::*" mode="generate"/>-->
+    <xsl:choose>
+      <xsl:when test="*|text()">
+        <xsl:apply-templates select="xs:attribute" mode="generate" xml:space="preserve"/>
+        <xsl:text>&gt;</xsl:text>
+        <!--<xsl:apply-templates select="*|text()" mode="generate" xml:space="preserve"/>-->
+        <xsl:text>&lt;/</xsl:text><xsl:value-of select="@name"/><xsl:text>&gt;</xsl:text>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:text>/&gt;</xsl:text>
+      </xsl:otherwise>
+    </xsl:choose>
+    </xsl:when>  
+    </xsl:choose>
+  </xsl:template>
+
+
+  <xsl:template match="xs:attribute" mode="generate">
+    <xsl:choose>
+      <xsl:when test="@name">
+        <xsl:variable name="name" select="@name"/>
+        <xsl:attribute name="{$name}"></xsl:attribute>
+    </xsl:when>
+    </xsl:choose>
+  </xsl:template>
+
+  <xsl:template match="@*" mode="generate">
+    <xsl:text> </xsl:text><xsl:value-of select="name()"/><xsl:text>="</xsl:text><xsl:value-of
+          select="."/><xsl:text>"</xsl:text>
+  </xsl:template>
+
+  <xsl:template match="text()" mode="generate">
     <xsl:value-of select="." xml:space="preserve"/>
   </xsl:template>
 

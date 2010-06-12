@@ -351,20 +351,17 @@
             border: #ff0000 dotted 1px;
           }
 
-          .testFormOutputData {
-            color: #000000;
-            font-family: andale mono, mono-type;  
-          }
-
           a.formControl:link, a.formControl:visited, a.formToggle:link, a.formToggle:visited {
             text-decoration: none;
           }
 
           .testFormOutputData {
+            color: #000000;
+            font-family: andale mono, mono-type;
             margin: 10px;
             padding: 10px;
             text-align: left;
-
+            overflow: auto;  
           }
 
           .testForm {
@@ -388,7 +385,6 @@
           }
         </style>
         <script type="text/javascript">
-          <xsl:comment>
             <![CDATA[
 
                  function Parameter(name, value) {
@@ -592,7 +588,6 @@
 
                  
                   ]]>
-          //</xsl:comment>
         </script>
 
       </head>
@@ -950,12 +945,12 @@
       <div class="testFormBox">
 
         <script type="text/javascript">
-          <xsl:comment>
-            var form_<xsl:value-of select="$id"/> = new WADLForm('<xsl:value-of select="$id"/>'); 
-          //</xsl:comment>
+
+            var form_<xsl:value-of select="string($id)"/> = new WADLForm('<xsl:value-of select="$id"/>'); 
+          
         </script>
         <a id="link-{$id}" class="formToggle">
-          <xsl:attribute name="href">javascript:form_<xsl:value-of select="$id"/>.toggleForm();</xsl:attribute>
+          <xsl:attribute name="href">javascript:form_<xsl:value-of select="string($id)"/>.toggleForm();</xsl:attribute>
           [ + ] show form
         </a>
 
@@ -997,12 +992,12 @@
 
           <!-- setting up configuration for the form submit -->
           <script type="text/javascript">
-            <xsl:comment>
+
               <xsl:apply-templates select="ancestor-or-self::wadl:*/wadl:param"
                                  mode="form-param-config">
                 <xsl:with-param name="formId" select="$id"/>
               </xsl:apply-templates>
-            //</xsl:comment>
+
           </script>
 
           <input type="button" value="submit">
@@ -1073,9 +1068,9 @@
               <xsl:when test="position() = 1">
                 <script type="text/javascript">
                   <!-- setting initial values -->
-                  <xsl:comment>
+
                   form_<xsl:value-of select="$formId"/>.setContentType('<xsl:value-of select="@mediaType"/>');
-                  //</xsl:comment>
+
                 </script>
               </xsl:when>
             </xsl:choose>

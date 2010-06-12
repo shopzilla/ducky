@@ -331,43 +331,50 @@
             opacity: 0.75;
           }
 
-          .testFormBox {
+          .formBox {
             margin: 10px;
             padding: 10px;
           }
 
-          .testFormOutputOk, .testFormOutputError {
+          .formOutputOk, .formOutputError {
             margin: 5px;
             padding: 2px;
             text-align: right;
             background-color: #ffffff;
           }
 
-          .testFormOutputOk {
+          .formOutputOk {
             border: #00cc00 dotted 1px;
           }
 
-          .testFormOutputError {
+          .formOutputError {
             border: #ff0000 dotted 1px;
+          }
+
+          .formOutputEntry {
+            border-top: #cccccc dotted 1px;
+            padding-top: 5px;
+            padding-bottom: 15px;
           }
 
           a.formControl:link, a.formControl:visited, a.formToggle:link, a.formToggle:visited {
             text-decoration: none;
           }
 
-          .testFormOutputData {
+          .formOutputData {
             color: #000000;
             font-family: andale mono, mono-type;
             margin: 10px;
             padding: 10px;
             text-align: left;
-            overflow: auto;  
+            overflow: auto;
           }
 
-          .testForm {
+          .form {
             margin-top: 10px;
             padding: 5px;
-            border: #cccccc solid 1px; /*width: 50%;*/
+            border: #cccccc solid 1px;
+            /*width: 50%;*/
           }
 
           .formToggle {
@@ -384,19 +391,23 @@
             text-align: center;
           }
         </style>
-        <script type="text/javascript">
-            <![CDATA[
-
+        <script type="text/JavaScript">
+            <xsl:text disable-output-escaping="yes">
+              <![CDATA[
+              
                  function Parameter(name, value) {
                     this.name=name;
                     this.value=value;
+                    this.takesValue=true
                  }
 
                  Parameter.prototype.toString = function() {
                     if(this.value) {
                       return this.name + '=' + window.escape(this.value);
+                    } else if(!this.takesValue) {
+                      return this.name;
                     }
-                    return this.name;
+                    return '';
                  }
 
                  function UrlBuilder(actionUrl) {
@@ -433,18 +444,45 @@
 
                     // add matrix params
                     if(this.matrixParams.length > 0) {
-                      finalAction = UrlBuilder.addIfNotPresent(finalAction, '/');
-                      finalAction += this.matrixParams.join(';');
+
+                      matrixString = this.matrixParams.join(';');
+                      
+                      if(!UrlBuilder.containsOnly(matrixString, ';')) {
+                        finalAction = UrlBuilder.addIfNotPresent(finalAction, '/');
+                        finalAction += matrixString;
+                      }
                     }
 
 
                     // add query params
                     if(this.queryParams.length > 0) {
-                      finalAction = UrlBuilder.addIfNotPresent(finalAction, '?');
-                      finalAction += this.queryParams.join('&');
+
+                      paramString = this.queryParams.join('&');
+
+                      if(!UrlBuilder.containsOnly(paramString, '&')) {
+                        finalAction = UrlBuilder.addIfNotPresent(finalAction, '?');
+                        finalAction += paramString;
+                      }
+
                     }
 
                     return finalAction;
+                 }
+
+                 UrlBuilder.containsOnly = function(str, chr) {
+
+                    if(str == null) {
+                      return false;
+                    }
+
+                    for(i=0; i < str.length; i++) {
+                      if(str[i] != chr) {
+                        return false;
+                      }
+                    }
+
+                    return true;
+
                  }
 
                  UrlBuilder.addIfNotPresent = function(path, char) {
@@ -459,6 +497,32 @@
                     this.contentType = null;
                  }
 
+                 WADLForm.httpFactories = [
+                  function() { return new XMLHttpRequest(); },
+                  function() { return new ActiveXObject('Mxsml2.XMLHTTP'); },
+                  function() { return new ActiveXObject('Microsoft.XMLHTTP'); }
+                 ];
+
+                 WADLForm.newRequest = function() {
+                 
+                   for(var i=0; i < WADLForm.httpFactories.length; i++) {
+                     try {
+
+                       var factory = WADLForm.httpFactories[i];
+                       var request = factory();
+                       if(request != null) {
+                         return request;
+                       }
+
+                     } catch(e) {
+                       continue;
+                     }
+
+                   }
+
+                   throw new Error('Could not create XMLHttpRequest');
+
+                 }
 
                  WADLForm.prototype.closeOutput = function() {
                       outerPanel = document.getElementById('form-' + this.formId+"-output");
@@ -484,26 +548,33 @@
                     }
                  }
 
+                 WADLForm.prototype.clearOutput = function() {
+                    innerPanel = document.getElementById('form-' + this.formId + '-output-data');
+                    while(innerPanel.childNodes.length > 0) {
+                      innerPanel.removeChild(innerPanel.childNodes[0]);
+                    }
+                 }
 
-                 WADLForm.prototype.showOutput = function(responseData, isOk) {
+                 WADLForm.prototype.showOutput = function(message, isOk) {
 
-                    dataNode = document.createTextNode(responseData);
+
                     innerPanel = document.getElementById('form-' + this.formId + '-output-data');
 
-                    if(innerPanel.childNodes.length > 0) {
-                      innerPanel.replaceChild(dataNode, innerPanel.childNodes[0]);
-                    } else {
-                      innerPanel.appendChild(dataNode);
-                    }
+
+                    textNode = document.createTextNode(message);
+                    logEntry = document.createElement('div');
+                    logEntry.setAttribute('class', 'formOutputEntry');
+                    logEntry.appendChild(textNode);
+                    innerPanel.appendChild(logEntry);
 
                     outerPanel = document.getElementById('form-' + this.formId + '-output');
                     outerPanel.style.visibility = 'visible';
                     outerPanel.style.display = 'block';
 
                     if(isOk) {
-                      outerPanel.setAttribute("class", "testFormOutputOk");
+                      outerPanel.setAttribute('class', 'formOutputOk');
                     } else {
-                      outerPanel.setAttribute("class", "testFormOutputError");
+                      outerPanel.setAttribute('class', 'formOutputError');
                     }
 
                   }
@@ -526,7 +597,7 @@
                     method = form.getAttribute('method').toLowerCase();
 
                     builder = new UrlBuilder(action);
-                    req = new XMLHttpRequest();
+                    req = WADLForm.newRequest();
 
                     inputs = form.getElementsByTagName('input');
 
@@ -555,15 +626,21 @@
                       finalUrl = builder.buildUrl();
 
                       requestBody = document.getElementById('form-'+this.formId+'-request-body');
+
+                      this.clearOutput();
                       
                       if(requestBody && requestBody.value && this.contentType) {
-                      
+
+                        this.showOutput(method.toUpperCase() + ' ' + finalUrl + ' ...', true);
+
                         req.setRequestHeader('Content-Type', this.contentType);
                         req.open(method, finalUrl, false);
                         req.send(requestBody.value);
 
                       } else {
-                      
+
+                        this.showOutput(method.toUpperCase() + ' ' + finalUrl + ' ...', true);
+
                         req.open(method, finalUrl, false);
                         req.send(null);
 
@@ -573,21 +650,19 @@
                       if(req.status && req.status > 199 && req.status < 300) {
                         this.showOutput(req.responseText, true);
                       } else {
-                        this.showOutput("Error requesting '" + finalUrl +"', Status: " + req.status + " - " + req.statusText
+                        this.showOutput("ERROR Status: " + req.status + " - " + req.statusText
                           + "; " + req.responseText, false);
 
                       }
                       
                     } catch(e) {
-                        this.showOutput("Error requesting '" + finalUrl + "':   " +  e, false);
+                        this.showOutput("ERROR " +  e, false);
                     }
 
                   }
 
-
-
-                 
                   ]]>
+                  </xsl:text>
         </script>
 
       </head>
@@ -635,8 +710,7 @@
           <xsl:apply-templates select="exsl:node-set($resources)/descendant::wadl:fault"
                                mode="list"/>
         </xsl:if>
-        <p id="footer">Shopzilla and Bizrate are servicemarks of Shopzilla, Inc. (C) 1996-2009. All
-          rights reserved.
+        <p id="footer">
         </p>
       </body>
     </html>
@@ -942,21 +1016,21 @@
     </xsl:variable>
     <!--<xsl:if test="ancestor-or-self::wadl:*/wadl:param[@style=$style]">-->
     <xsl:if test="ancestor-or-self::wadl:*/wadl:param">  
-      <div class="testFormBox">
+      <div class="formBox">
 
-        <script type="text/javascript">
+        <script type="text/JavaScript">
 
-            var form_<xsl:value-of select="string($id)"/> = new WADLForm('<xsl:value-of select="$id"/>'); 
+            var form_<xsl:value-of select="$id"/> = new WADLForm('<xsl:value-of select="$id"/>');
           
         </script>
         <a id="link-{$id}" class="formToggle">
-          <xsl:attribute name="href">javascript:form_<xsl:value-of select="string($id)"/>.toggleForm();</xsl:attribute>
+          <xsl:attribute name="href">javascript:form_<xsl:value-of select="$id"/>.toggleForm();</xsl:attribute>
           [ + ] show form
         </a>
 
 
 
-        <form class="testForm" id="form-{$id}" style="visibility: hidden; display: none">
+        <form class="form" id="form-{$id}" style="visibility: hidden; display: none">
           <xsl:attribute name="action">
             <xsl:value-of select="$context"/>
           </xsl:attribute>
@@ -991,7 +1065,7 @@
           </table>
 
           <!-- setting up configuration for the form submit -->
-          <script type="text/javascript">
+          <script type="text/JavaScript">
 
               <xsl:apply-templates select="ancestor-or-self::wadl:*/wadl:param"
                                  mode="form-param-config">
@@ -1004,9 +1078,9 @@
             <xsl:attribute name="onclick">form_<xsl:value-of select="$id"/>.submit();</xsl:attribute>
           </input>
         </form>
-        <div class="testFormOutputOk" id="form-{$id}-output" style="visibility: hidden; display: none">
+        <div class="formOutputOk" id="form-{$id}-output" style="visibility: hidden; display: none">
           <a class="formControl"><xsl:attribute name="href">javascript:form_<xsl:value-of select="$id"/>.closeOutput();</xsl:attribute>[ x ]</a>
-          <div class="testFormOutputData" id="form-{$id}-output-data">
+          <div class="formOutputData" id="form-{$id}-output-data">
           <!-- empty until we fill with response output -->
           </div>
         </div>
@@ -1066,7 +1140,7 @@
             </input>
             <xsl:choose>
               <xsl:when test="position() = 1">
-                <script type="text/javascript">
+                <script type="text/JavaScript">
                   <!-- setting initial values -->
 
                   form_<xsl:value-of select="$formId"/>.setContentType('<xsl:value-of select="@mediaType"/>');

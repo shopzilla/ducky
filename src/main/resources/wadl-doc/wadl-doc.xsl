@@ -234,7 +234,7 @@
             <xsl:when test="wadl:doc[@title]">
               <xsl:value-of select="wadl:doc[@title][1]/@title"/>
             </xsl:when>
-            <xsl:otherwise>My Web Application</xsl:otherwise>
+            <xsl:otherwise>Web Application Description</xsl:otherwise>
           </xsl:choose>
         </title>
         <link rel="shortcut icon"
@@ -431,11 +431,11 @@
 
                  UrlBuilder.prototype.buildUrl = function() {
 
-                    finalAction = this.actionUrl;
+                    var finalAction = this.actionUrl;
 
                     // put in template params  
-                    for(i=0; i < this.templateParams.length; i++) {
-                      p = this.templateParams[i];
+                    for(var i=0; i < this.templateParams.length; i++) {
+                      var p = this.templateParams[i];
                       if(p.value) {
                         finalAction = finalAction.replace('{' + p.name + '}', window.escape(p.value));
                       }
@@ -445,7 +445,7 @@
                     // add matrix params
                     if(this.matrixParams.length > 0) {
 
-                      matrixString = this.matrixParams.join(';');
+                      var matrixString = this.matrixParams.join(';');
                       
                       if(!UrlBuilder.containsOnly(matrixString, ';')) {
                         finalAction = UrlBuilder.addIfNotPresent(finalAction, '/');
@@ -457,7 +457,7 @@
                     // add query params
                     if(this.queryParams.length > 0) {
 
-                      paramString = this.queryParams.join('&');
+                      var paramString = this.queryParams.join('&');
 
                       if(!UrlBuilder.containsOnly(paramString, '&')) {
                         finalAction = UrlBuilder.addIfNotPresent(finalAction, '?');
@@ -525,14 +525,14 @@
                  }
 
                  WADLForm.prototype.closeOutput = function() {
-                      outerPanel = document.getElementById('form-' + this.formId+"-output");
+                      var outerPanel = document.getElementById('form-' + this.formId+"-output");
                       outerPanel.style.visibility = 'hidden';
                       outerPanel.style.display = 'none';
                   }
 
                  WADLForm.prototype.toggleForm = function() {
-                    anchor = document.getElementById('link-' + this.formId);
-                    form = document.getElementById('form-' + this.formId);
+                    var anchor = document.getElementById('link-' + this.formId);
+                    var form = document.getElementById('form-' + this.formId);
                     if (anchor != null && form != null) {
                       if(form.style.visibility == 'hidden') {
                         form.style.visibility = 'visible';
@@ -549,7 +549,7 @@
                  }
 
                  WADLForm.prototype.clearOutput = function() {
-                    innerPanel = document.getElementById('form-' + this.formId + '-output-data');
+                    var innerPanel = document.getElementById('form-' + this.formId + '-output-data');
                     while(innerPanel.childNodes.length > 0) {
                       innerPanel.removeChild(innerPanel.childNodes[0]);
                     }
@@ -557,17 +557,15 @@
 
                  WADLForm.prototype.showOutput = function(message, isOk) {
 
+                    var innerPanel = document.getElementById('form-' + this.formId + '-output-data');
 
-                    innerPanel = document.getElementById('form-' + this.formId + '-output-data');
-
-
-                    textNode = document.createTextNode(message);
-                    logEntry = document.createElement('div');
+                    var textNode = document.createTextNode(message);
+                    var logEntry = document.createElement('div');
                     logEntry.setAttribute('class', 'formOutputEntry');
                     logEntry.appendChild(textNode);
                     innerPanel.appendChild(logEntry);
 
-                    outerPanel = document.getElementById('form-' + this.formId + '-output');
+                    var outerPanel = document.getElementById('form-' + this.formId + '-output');
                     outerPanel.style.visibility = 'visible';
                     outerPanel.style.display = 'block';
 
@@ -587,24 +585,31 @@
                       this.contentType = contentType;
                   }
 
+                  WADLForm.addHeaders = function(request, headerParams) {
 
+                    for(var i=0; i < headerParams.length; i++) {
+                      request.setRequestHeader(headerParams[i].name, headerParams[i].value);
+                    }
+
+                  }
 
                   WADLForm.prototype.submit = function() {
 
-                    form = document.getElementById('form-'+this.formId);
+                    var form = document.getElementById('form-'+this.formId);
 
-                    action = form.getAttribute('action');
-                    method = form.getAttribute('method').toLowerCase();
+                    var action = form.getAttribute('action');
+                    var method = form.getAttribute('method').toLowerCase();
 
-                    builder = new UrlBuilder(action);
-                    req = WADLForm.newRequest();
+                    var builder = new UrlBuilder(action);
+                    var req = WADLForm.newRequest();
 
-                    inputs = form.getElementsByTagName('input');
+                    var inputs = form.getElementsByTagName('input');
+                    var headers = new Array();
 
-                    for(i=0; i < inputs.length; i++) {
-                      x = inputs[i];
-                      name = x.getAttribute('name');
-                      type = this.paramTypes[name];
+                    for(var i=0; i < inputs.length; i++) {
+                      var x = inputs[i];
+                      var name = x.getAttribute('name');
+                      var type = this.paramTypes[name];
                       if(type) {
 
                         if(type == 'query') {
@@ -614,7 +619,7 @@
                         } else  if (type == 'matrix') {
                           builder.addMatrixParam(name, x.value);
                         } else  if (type == 'header') {
-                          req.setRequestHeader(name, x.value);
+                          headers.push(new Parameter(name, x.value));
                         }
 
                       }
@@ -623,18 +628,18 @@
 
                     try {
 
-                      finalUrl = builder.buildUrl();
+                      var finalUrl = builder.buildUrl();
 
-                      requestBody = document.getElementById('form-'+this.formId+'-request-body');
+                      var requestBody = document.getElementById('form-'+this.formId+'-request-body');
 
                       this.clearOutput();
                       
                       if(requestBody && requestBody.value && this.contentType) {
 
                         this.showOutput(method.toUpperCase() + ' ' + finalUrl + ' ...', true);
-
-                        req.setRequestHeader('Content-Type', this.contentType);
+                        headers.push(new Parameter('Content-Type', this.contentType));
                         req.open(method, finalUrl, false);
+                        WADLForm.addHeaders(req, headers);
                         req.send(requestBody.value);
 
                       } else {
@@ -642,6 +647,7 @@
                         this.showOutput(method.toUpperCase() + ' ' + finalUrl + ' ...', true);
 
                         req.open(method, finalUrl, false);
+                        WADLForm.addHeaders(req, headers);
                         req.send(null);
 
                       }
@@ -652,7 +658,6 @@
                       } else {
                         this.showOutput("ERROR Status: " + req.status + " - " + req.statusText
                           + "; " + req.responseText, false);
-
                       }
                       
                     } catch(e) {
@@ -673,7 +678,7 @@
             <xsl:when test="wadl:doc[@title]">
               <xsl:value-of select="wadl:doc[@title][1]/@title"/>
             </xsl:when>
-            <xsl:otherwise>My Web Application</xsl:otherwise>
+            <xsl:otherwise>Web Application Description</xsl:otherwise>
           </xsl:choose>
         </h1>
         <xsl:apply-templates select="wadl:doc"/>
@@ -1109,7 +1114,7 @@
           </td>
           <td>
             <textarea rows="10" cols="35">
-              <xsl:attribute name="name">form-<xsl:value-of select="$formId"/>-request-body</xsl:attribute>
+              <xsl:attribute name="id">form-<xsl:value-of select="$formId"/>-request-body</xsl:attribute>
               <!-- Generate an example of the first listed representation -->
               <xsl:apply-templates select="ancestor-or-self::wadl:*/wadl:representation[1]"
                                  mode="form-representation-example"/>

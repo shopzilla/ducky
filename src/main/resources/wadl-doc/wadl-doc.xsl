@@ -398,13 +398,19 @@
                  function Parameter(name, value) {
                     this.name=name;
                     this.value=value;
-                    this.takesValue=true
+                    this.fixed=false;
+                 }
+
+                 function ParameterDefinition(style, required, fixed) {
+                    this.style=style;
+                    this.required=required;
+                    this.fixed=fixed;
                  }
 
                  Parameter.prototype.toString = function() {
                     if(this.value) {
                       return this.name + '=' + window.escape(this.value);
-                    } else if(!this.takesValue) {
+                    } else if(this.fixed) {
                       return this.name;
                     }
                     return '';
@@ -417,16 +423,16 @@
                     this.matrixParams = new Array();
                  }
 
-                 UrlBuilder.prototype.addTemplateParam = function(name, value) {
-                    this.templateParams.push(new Parameter(name, value))
+                 UrlBuilder.prototype.addTemplateParam = function(param) {
+                    this.templateParams.push(param)
                  }
 
-                 UrlBuilder.prototype.addQueryParam = function(name, value) {
-                    this.queryParams.push(new Parameter(name, value))
+                 UrlBuilder.prototype.addQueryParam = function(param) {
+                    this.queryParams.push(param)
                  }
                  
-                 UrlBuilder.prototype.addMatrixParam = function(name, value) {
-                    this.matrixParams.push(new Parameter(name, value))
+                 UrlBuilder.prototype.addMatrixParam = function(param) {
+                    this.matrixParams.push(param)
                  }
 
                  UrlBuilder.prototype.buildUrl = function() {
@@ -493,7 +499,7 @@
 
                  function WADLForm(formId) {
                     this.formId=formId;
-                    this.paramTypes = new Array();
+                    this.paramDefinitions = new Array();
                     this.contentType = null;
                  }
 
@@ -577,9 +583,11 @@
 
                   }
 
-                  WADLForm.prototype.addInput = function(inputName, paramType) {
-                    this.paramTypes[inputName] = paramType.toLowerCase();
+                  WADLForm.prototype.addInput = function(inputName, style, required, fixed) {
+
+                    this.paramDefinitions[inputName] = new ParameterDefinition(style.toLowerCase(), required, fixed);
                   }
+
 
                   WADLForm.prototype.setContentType = function(contentType) {
                       this.contentType = contentType;
@@ -599,26 +607,27 @@
 
                     var action = form.getAttribute('action');
                     var method = form.getAttribute('method').toLowerCase();
-
-                    var builder = new UrlBuilder(action);
-                    var req = WADLForm.newRequest();
-
                     var inputs = form.getElementsByTagName('input');
+
                     var headers = new Array();
+                    var builder = new UrlBuilder(action);
 
                     for(var i=0; i < inputs.length; i++) {
                       var x = inputs[i];
                       var name = x.getAttribute('name');
-                      var type = this.paramTypes[name];
-                      if(type) {
-
-                        if(type == 'query') {
-                          builder.addQueryParam(name, x.value);
-                        } else if (type == 'template') {
-                          builder.addTemplateParam(name, x.value);
-                        } else  if (type == 'matrix') {
-                          builder.addMatrixParam(name, x.value);
-                        } else  if (type == 'header') {
+                      var paramDef = this.paramDefinitions[name];
+                      
+                      if(paramDef) {
+                        var style = paramDef.style;
+                        if(style == 'query') {
+                          var p = new Parameter(name, x.value);
+                          p.fixed = paramDef.fixed;
+                          builder.addQueryParam(p);
+                        } else if (style == 'template') {
+                          builder.addTemplateParam(new Parameter(name, x.value));
+                        } else  if (style == 'matrix') {
+                          builder.addMatrixParam(new Parameter(name, x.value));
+                        } else  if (style == 'header') {
                           headers.push(new Parameter(name, x.value));
                         }
 
@@ -633,10 +642,12 @@
                       var requestBody = document.getElementById('form-'+this.formId+'-request-body');
 
                       this.clearOutput();
-                      
+
+                      var req = WADLForm.newRequest();
+
                       if(requestBody && requestBody.value && this.contentType) {
 
-                        this.showOutput(method.toUpperCase() + ' ' + finalUrl + ' ...', true);
+                        this.showOutput(method.toUpperCase() + ' ' + finalUrl, true);
                         headers.push(new Parameter('Content-Type', this.contentType));
                         req.open(method, finalUrl, false);
                         WADLForm.addHeaders(req, headers);
@@ -644,7 +655,7 @@
 
                       } else {
 
-                        this.showOutput(method.toUpperCase() + ' ' + finalUrl + ' ...', true);
+                        this.showOutput(method.toUpperCase() + ' ' + finalUrl, true);
 
                         req.open(method, finalUrl, false);
                         WADLForm.addHeaders(req, headers);
@@ -1323,8 +1334,10 @@
 
   <xsl:template match="wadl:param" mode="form-param-config">
     <xsl:param name="formId"/>
+    <xsl:variable name="required" select="boolean(string(@required))"/>
+    <xsl:variable name="fixed" select="boolean(@fixed)"/>
     <!-- making note of the parameter's "style" for the JavaScript layer -->
-    form_<xsl:value-of select="$formId"/>.addInput('<xsl:value-of select="@name"/>','<xsl:value-of select="@style"/>');
+    form_<xsl:value-of select="$formId"/>.addInput('<xsl:value-of select="@name"/>','<xsl:value-of select="@style"/>', <xsl:value-of select="$required"/>, <xsl:value-of select="$fixed"/>);
   </xsl:template>
 
 

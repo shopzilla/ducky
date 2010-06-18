@@ -11,6 +11,10 @@
   </prerequisites>
   <name>wadl-doc</name>
   <url>http://maven.apache.org</url>
+    <scm>
+      <developerConnection>scm:git:git://git.shopzilla.com/site/sharedweb/wadl-doc</developerConnection>
+      <connection>scm:git:git://git.shopzilla.com/site/sharedweb/wadl-doc</connection>
+  </scm>
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
@@ -119,4 +123,22 @@
       </properties>
     </profile>
   </profiles>
+  <distributionManagement>
+    <!-- Defines where to deploy artifacts to -->
+    <repository>
+      <id>jvlinux-repository-release</id>
+      <name>jvlinux release repository</name>
+      <url>scp://jvlinux.shopzilla.com/maven2/release</url>
+    </repository>
+    <snapshotRepository>
+      <id>jvlinux-repository-snapshot</id>
+      <name>jvlinux snapshop repository</name>
+      <url>scp://jvlinux.shopzilla.com/maven2/snapshot</url>
+    </snapshotRepository>
+    <site>
+      <id>opensource.shopzilla.com</id>
+      <name>WADL Doc</name>
+      <url>scp://opensource.shopzilla.com/site/wadl-doc</url>
+    </site>
+  </distributionManagement>
 </project>

@@ -49,7 +49,7 @@ public class WadlXsltFilterTest {
 
 
         filter.setRequestMatcher(yesMan);
-        filter.setStylesheetUrl("test.xsl");
+        filter.setStylesheetPath("test.xsl");
 
         
 
@@ -66,7 +66,7 @@ public class WadlXsltFilterTest {
         when(noMan.match(request)).thenReturn(false);
         
         filter.setRequestMatcher(noMan);
-        filter.setStylesheetUrl("test.xsl");
+        filter.setStylesheetPath("test.xsl");
 
         filter.doFilter(request, response, chain);
 

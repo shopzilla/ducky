@@ -15,6 +15,7 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 
@@ -34,16 +35,18 @@ public final class WadlXsltFilter implements Filter {
 
     private static final Log LOG = LogFactory.getLog(WadlXsltFilter.class);
 
-    private String stylesheetUrl="../app/wadl-doc.xsl";
+    private String stylesheetPath ="app/wadl-doc.xsl";
     
     private RequestMatcher requestMatcher = CxfJaxRsRequestMatcher.INSTANCE;
 
+
     /**
-     * Controls where the stylesheet is sourced from.
-     * @param stylesheetUrl
+     * Controls where the stylesheet is sourced from. The path should NOT begin with a '/' character,
+     * and should be relative to the Servlet context path.
+     * @param stylesheetPath
      */
-    public void setStylesheetUrl(String stylesheetUrl) {
-        this.stylesheetUrl = stylesheetUrl;
+    public void setStylesheetPath(String stylesheetPath) {
+        this.stylesheetPath = stylesheetPath;
     }
 
     /**
@@ -72,7 +75,7 @@ public final class WadlXsltFilter implements Filter {
                     new ByteBufferResponseWrapper(
                             (HttpServletResponse) response);
 
-            wrapper.getWriter().append(makeProcessingInstruction()).append("\n").flush();
+            wrapper.getWriter().append(makeProcessingInstruction(request)).append("\n").flush();
 
             chain.doFilter(request, wrapper);
 
@@ -90,9 +93,17 @@ public final class WadlXsltFilter implements Filter {
     }
 
 
-    String makeProcessingInstruction() {
-        return "<?xml-stylesheet href=\"" + this.stylesheetUrl + "\" type=\"text/xsl\"?>";
+    String makeProcessingInstruction(ServletRequest request) {
+
+        String basePath = "";
+        if(request instanceof HttpServletRequest) {
+            basePath = ((HttpServletRequest)request).getContextPath() + "/";
+        }
+
+        return "<?xml-stylesheet href=\"" + basePath + this.stylesheetPath + "\" type=\"text/xsl\"?>";
     }
+
+
 
     public void destroy() {
         /* Do nothing */

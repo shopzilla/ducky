@@ -135,10 +135,10 @@
       <name>jvlinux snapshop repository</name>
       <url>scp://jvlinux.shopzilla.com/maven2/snapshot</url>
     </snapshotRepository>
-    <site>
-      <id>opensource.shopzilla.com</id>
-      <name>WADL Doc</name>
-      <url>scp://opensource.shopzilla.com/site/wadl-doc</url>
-    </site>
+    <!--<site>-->
+      <!--<id>opensource.shopzilla.com</id>-->
+      <!--<name>WADL Doc</name>-->
+      <!--<url>scp://opensource.shopzilla.com/site/wadl-doc</url>-->
+    <!--</site>-->
   </distributionManagement>
 </project>

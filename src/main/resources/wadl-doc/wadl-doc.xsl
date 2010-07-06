@@ -48,14 +48,9 @@
 
   <xsl:template match="wadl:resources" mode="expand">
     <xsl:variable name="base">
-      <xsl:choose>
-        <xsl:when test="substring(@base, string-length(@base), 1) = '/'">
-          <xsl:value-of select="substring(@base, 1, string-length(@base) - 1)"/>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:value-of select="@base"/>
-        </xsl:otherwise>
-      </xsl:choose>
+      <xsl:call-template name="chop-trailing-slash">
+        <xsl:with-param name="pathParam" select="@base"/>
+      </xsl:call-template>
     </xsl:variable>
     <xsl:element name="resources" namespace="{$wadl-ns}">
       <xsl:for-each select="namespace::*">
@@ -736,7 +731,7 @@
 
   <xsl:template match="wadl:resources" mode="toc">
     <xsl:variable name="base">
-      <xsl:call-template name="chop-trailing-slash">
+      <xsl:call-template name="chop-leading-trailing-slash">
                 <xsl:with-param name="pathParam" select="@base"/>
       </xsl:call-template>
     </xsl:variable>
@@ -755,7 +750,9 @@
       <xsl:call-template name="get-id"/>
     </xsl:variable>
     <xsl:variable name="name">
-      <xsl:value-of select="$context"/>/<xsl:call-template name="chop-trailing-slash">
+      <xsl:call-template name="chop-leading-trailing-slash">
+        <xsl:with-param name="pathParam" select="$context"/>
+      </xsl:call-template>/<xsl:call-template name="chop-leading-trailing-slash">
         <xsl:with-param name="pathParam" select="@path"/>
       </xsl:call-template>
     </xsl:variable>
@@ -767,7 +764,7 @@
         <ul>
           <xsl:apply-templates select="wadl:resource" mode="toc">
             <xsl:with-param name="context">
-              <xsl:call-template name="chop-trailing-slash">
+              <xsl:call-template name="chop-leading-trailing-slash">
                 <xsl:with-param name="pathParam" select="$name"/>
               </xsl:call-template>
             </xsl:with-param>
@@ -798,7 +795,7 @@
 
   <xsl:template match="wadl:resources" mode="list">
     <xsl:variable name="base">
-      <xsl:call-template name="chop-trailing-slash">
+      <xsl:call-template name="chop-leading-trailing-slash">
         <xsl:with-param name="pathParam" select="@base"/>
       </xsl:call-template>
     </xsl:variable>
@@ -820,9 +817,9 @@
           <xsl:call-template name="get-id"/>
         </xsl:variable>
         <xsl:variable name="name">
-          <xsl:call-template name="chop-trailing-slash">
+          <xsl:call-template name="chop-leading-trailing-slash">
             <xsl:with-param name="pathParam" select="$context"/>
-          </xsl:call-template>/<xsl:call-template name="chop-trailing-slash">
+          </xsl:call-template>/<xsl:call-template name="chop-leading-trailing-slash">
             <xsl:with-param name="pathParam" select="@path"/>
           </xsl:call-template>
           <xsl:for-each select="wadl:param[@style='matrix']">
@@ -899,9 +896,18 @@
       <xsl:apply-templates select="wadl:doc"/>
       <xsl:apply-templates select="wadl:request"/>
       <xsl:apply-templates select="wadl:response"/>
-      <xsl:apply-templates select="wadl:request" mode="form">
-        <xsl:with-param name="context" select="$context"/>
-      </xsl:apply-templates>
+      <xsl:choose>
+        <xsl:when test="wadl:request">
+          <xsl:apply-templates select="wadl:request" mode="form">
+            <xsl:with-param name="context" select="$context"/>
+          </xsl:apply-templates>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:apply-templates select="." mode="form">
+            <xsl:with-param name="context" select="$context"/>
+          </xsl:apply-templates>
+        </xsl:otherwise>
+      </xsl:choose>
     </div>
   </xsl:template>
 
@@ -924,11 +930,10 @@
     </xsl:if>
   </xsl:template>
 
-  <xsl:template match="wadl:request" mode="form">
+  <xsl:template match="wadl:*" mode="form">
     <xsl:param name="context"/>
     <xsl:apply-templates select="." mode="form-param-group">
       <xsl:with-param name="context" select="$context"/>
-      <xsl:with-param name="prefix">request</xsl:with-param>
     </xsl:apply-templates>
   </xsl:template>
 
@@ -1025,13 +1030,12 @@
 
   <xsl:template match="wadl:*" mode="form-param-group">
     <xsl:param name="context"/>
-    <!--<xsl:param name="style"/>-->
-    <xsl:param name="prefix"/>
     <xsl:variable name="id">
       <xsl:call-template name="get-id"/>
     </xsl:variable>
     <!--<xsl:if test="ancestor-or-self::wadl:*/wadl:param[@style=$style]">-->
-    <xsl:if test="ancestor-or-self::wadl:*/wadl:param">  
+    <!--<xsl:if test="ancestor-or-self::wadl:*/wadl:param">  -->
+    <xsl:if test="ancestor-or-self::wadl:method">
       <div class="formBox">
 
         <script type="text/JavaScript">
@@ -1063,22 +1067,24 @@
           <h5>
             <xsl:value-of select="$context"/>
           </h5>
-          <!-- need a way to set the action to something reasonable here -->
-          <table>
-            <tr>
-              <th>parameter</th>
-              <th>value</th>
-              <th>input</th>
-            </tr>
 
-             <xsl:apply-templates select="ancestor-or-self::wadl:*/wadl:param"
+          <xsl:if test="ancestor-or-self::wadl:*/wadl:param">
+            <table>
+              <tr>
+                <th>parameter</th>
+                <th>value</th>
+                <th>input</th>
+              </tr>
+
+              <xsl:apply-templates select="ancestor-or-self::wadl:*/wadl:param"
                                  mode="form-param"/>
 
-             <xsl:apply-templates select="."
+              <xsl:apply-templates select="."
                                  mode="form-request-body">
-              <xsl:with-param name="formId" select="$id"/>  
-             </xsl:apply-templates>
-          </table>
+                <xsl:with-param name="formId" select="$id"/>
+              </xsl:apply-templates>
+            </table>
+          </xsl:if>
 
           <!-- setting up configuration for the form submit -->
           <script type="text/JavaScript">
@@ -1104,7 +1110,7 @@
     </xsl:if>
   </xsl:template>
 
-  <xsl:template match="wadl:request" mode="form-request-body">
+  <xsl:template match="wadl:*" mode="form-request-body">
     <xsl:param name="formId"/>
     <xsl:choose>
       <xsl:when test="ancestor-or-self::wadl:*/wadl:representation">
@@ -1425,6 +1431,24 @@
         <xsl:value-of select="$pathParam"/>
       </xsl:otherwise>
     </xsl:choose>
+  </xsl:template>
+
+
+  <xsl:template name="chop-leading-trailing-slash">
+    <xsl:param name="pathParam" />
+    <xsl:variable name="choppedPathParam">
+    <xsl:choose>
+      <xsl:when test="substring($pathParam, 1, 1) = '/'">
+         <xsl:value-of select="substring($pathParam, 2, string-length($pathParam))"/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of   select="$pathParam"/>
+      </xsl:otherwise>
+    </xsl:choose>
+    </xsl:variable>
+    <xsl:call-template name="chop-trailing-slash">
+      <xsl:with-param name="pathParam" select="$choppedPathParam"/>  
+    </xsl:call-template>
   </xsl:template>
 
   <xsl:template name="get-namespace-uri">

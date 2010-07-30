@@ -1,31 +1,49 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
+
+ Copyright (C) 2010 Shopzilla, Inc
+
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+
+
+  http://tech.shopzilla.com
+
+  Author: Will Gage; Modified the XSL stylesheet originally authored by Mark Nottingham to implement form generation.
+
+-->
+
+<!--
+
+  Original copyright notice from Mark Nottingham of Yahoo! Inc.
+
   wadl_documentation.xsl (2007-12-19)
 
   An XSLT stylesheet for generating HTML documentation from WADL,
   by Mark Nottingham <mnot@yahoo-inc.com>.
 
   Copyright (c) 2006-2007 Yahoo! Inc.
-  
-  This work is licensed under the Creative Commons Attribution-ShareAlike 2.5 
-  License. To view a copy of this license, visit 
-    http://creativecommons.org/licenses/by-sa/2.5/ 
+
+  This work is licensed under the Creative Commons Attribution-ShareAlike 2.5
+  License. To view a copy of this license, visit
+    http://creativecommons.org/licenses/by-sa/2.5/
   or send a letter to 
     Creative Commons
     543 Howard Street, 5th Floor
     San Francisco, California, 94105, USA
 -->
-<!-- 
- * FIXME
-    - Doesn't inherit query/header params from resource/@type
-    - XML schema import, include, redefine don't import
--->
-<!--
-  * TODO
-    - forms
-    - link to or include non-schema variable type defs (as a separate list?)
-    - @href error handling
--->
+
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0"
                 xmlns:wadl="http://research.sun.com/wadl/2006/10"
                 xmlns:xs="http://www.w3.org/2001/XMLSchema"
@@ -232,8 +250,7 @@
             <xsl:otherwise>Web Application Description</xsl:otherwise>
           </xsl:choose>
         </title>
-        <link rel="shortcut icon"
-              href="http://img01.shopzilla-images.com/sz2s/sz2/common/images/shopzilla.ico"/>
+
         <style type="text/css">
 
           body {

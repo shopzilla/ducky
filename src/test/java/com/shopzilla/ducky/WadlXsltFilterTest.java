@@ -2,8 +2,10 @@
  * Copyright (C) 2004-2010 Shopzilla, Inc.
  * All rights reserved. Unauthorized disclosure or distribution is prohibited.
  */
-package com.shopzilla.site.service.http.wadl.filter;
+package com.shopzilla.ducky;
 
+import com.shopzilla.ducky.RequestMatcher;
+import com.shopzilla.ducky.WadlXsltFilter;
 import org.junit.*;
 import static org.mockito.Mockito.*;
 

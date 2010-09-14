@@ -5,6 +5,8 @@
 package com.shopzilla.site.service.http.wadl.filter;
 
 import org.junit.*;
+
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 import java.io.PrintWriter;
@@ -88,16 +90,38 @@ public class WadlXsltFilterTest {
 
 
     @Test
+    public void testByteBufferResponseWrapperGetWriter() throws Exception {
+
+        WadlXsltFilter.ByteBufferResponseWrapper wrapper = new WadlXsltFilter.ByteBufferResponseWrapper(response);
+        PrintWriter pw = wrapper.getWriter();
+        pw.print("Hello World");
+        pw.close();
+        Assert.assertEquals(wrapper.toString(), "Hello World");
+    }
+
+    @Test
     public void testByteBufferResponseWrapperGetServletOutputStream() throws Exception {
 
         WadlXsltFilter.ByteBufferResponseWrapper wrapper = new WadlXsltFilter.ByteBufferResponseWrapper(response);
         ServletOutputStream sos = wrapper.getOutputStream();
         sos.print("Hello World");
-
         Assert.assertEquals(wrapper.toString(), "Hello World");
-
     }
 
+    @Test 
+    public void testInjectStyleSheetWithXmlPrologue() {
+        String original = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<rest/>";
+        String styleSheetPath = "<?xml-stylesheet href=\"\" type=\"text/xsl\"?>";
+        assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
+                + "<?xml-stylesheet href=\"\" type=\"text/xsl\"?>\n"
+                + "<rest/>", filter.injectStyleSheet(original, styleSheetPath));
+    }
 
-
+    @Test 
+    public void testInjectStyleSheetWithoutXmlPrologue() {
+        String original = "<rest/>";
+        String styleSheetPath = "<?xml-stylesheet href=\"\" type=\"text/xsl\"?>";
+        assertEquals("<?xml-stylesheet href=\"\" type=\"text/xsl\"?>\n"
+                + "<rest/>", filter.injectStyleSheet(original, styleSheetPath));
+    }
 }

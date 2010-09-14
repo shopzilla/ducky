@@ -74,14 +74,15 @@ public final class WadlXsltFilter implements Filter {
             ByteBufferResponseWrapper wrapper =
                     new ByteBufferResponseWrapper(
                             (HttpServletResponse) response);
-
-            wrapper.getWriter().append(makeProcessingInstruction(request)).append("\n").flush();
+            String styleSheetPath = makeProcessingInstruction(request);
 
             chain.doFilter(request, wrapper);
 
+            wrapper.getWriter().flush();
+            String responseStr = injectStyleSheet(wrapper.toString(), styleSheetPath);
+            response.setContentLength(responseStr.length());
             PrintWriter out = response.getWriter();
-
-            out.append(wrapper.toString());
+            out.append(responseStr);
             out.flush();
 
         } else {
@@ -92,6 +93,23 @@ public final class WadlXsltFilter implements Filter {
         }
     }
 
+    String injectStyleSheet(String original, String styleSheetPath) {
+        StringBuffer sb = new StringBuffer();
+        if (hasXmlPrologue(original)) {
+            String[] parts = original.split("\n", 2);
+            sb.append(parts[0]).append("\n"); // xml prologue
+            sb.append(styleSheetPath).append("\n");
+            sb.append(parts[1]); // the rest 
+        } else {
+            sb.append(styleSheetPath).append("\n");
+            sb.append(original); // the content 
+        }
+        return sb.toString();
+    }
+
+    boolean hasXmlPrologue(String responseStr) {
+        return responseStr.startsWith("<?xml ");
+    }
 
     String makeProcessingInstruction(ServletRequest request) {
 

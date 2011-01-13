@@ -1085,7 +1085,7 @@
             <xsl:value-of select="$context"/>
           </h5>
 
-          <xsl:if test="ancestor-or-self::wadl:*/wadl:param">
+          <xsl:if test="ancestor-or-self::wadl:*/wadl:param or ancestor-or-self::wadl:*/wadl:representation">
             <table>
               <tr>
                 <th>parameter</th>

@@ -2,7 +2,7 @@
  * Copyright (C) 2004-2010 Shopzilla, Inc.
  * All rights reserved. Unauthorized disclosure or distribution is prohibited.
  */
-package com.shopzilla.site.service.http.wadl.filter;
+package com.shopzilla.ducky;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;

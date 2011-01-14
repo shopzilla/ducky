@@ -2,7 +2,7 @@
  * Copyright (C) 2004-2010 Shopzilla, Inc.
  * All rights reserved. Unauthorized disclosure or distribution is prohibited.
  */
-package com.shopzilla.site.service.http.wadl.filter;
+package com.shopzilla.ducky;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;

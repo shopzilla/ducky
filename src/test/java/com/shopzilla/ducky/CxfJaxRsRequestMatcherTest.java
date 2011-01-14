@@ -4,7 +4,6 @@
  */
 package com.shopzilla.ducky;
 
-import com.shopzilla.ducky.CxfJaxRsRequestMatcher;
 import org.junit.*;
 import static org.mockito.Mockito.*;
 

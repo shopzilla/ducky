@@ -4,8 +4,6 @@
  */
 package com.shopzilla.ducky;
 
-import com.shopzilla.ducky.RequestMatcher;
-import com.shopzilla.ducky.WadlXsltFilter;
 import org.junit.*;
 
 import static org.junit.Assert.assertEquals;

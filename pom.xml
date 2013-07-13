@@ -122,16 +122,15 @@
     </profile>
   </profiles>
   <distributionManagement>
-    <!-- Defines where to deploy artifacts to -->
     <repository>
-      <id>jvlinux-repository-release</id>
-      <name>jvlinux release repository</name>
-      <url>scp://jvlinux.shopzilla.com/maven2/release</url>
+      <id>internal-releases</id>
+      <name>internal-releases</name>
+      <url>http://nexus.shopzilla.com:2099/nexus/content/repositories/internal-releases/</url>
     </repository>
     <snapshotRepository>
-      <id>jvlinux-repository-snapshot</id>
-      <name>jvlinux snapshop repository</name>
-      <url>scp://jvlinux.shopzilla.com/maven2/snapshot</url>
+      <id>internal-snapshots</id>
+      <name>internal-releases</name>
+      <url>http://nexus.shopzilla.com:2099/nexus/content/repositories/internal-snapshots/</url>
     </snapshotRepository>
   </distributionManagement>
 </project>

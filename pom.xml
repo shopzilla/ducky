@@ -8,10 +8,11 @@
     <maven>2.0.9</maven>
   </prerequisites>
   <name>ducky</name>
-  <url>http://maven.apache.org</url>
-    <scm>
-      <developerConnection>scm:git:git://git.shopzilla.com/site/sharedweb/wadl-doc</developerConnection>
-      <connection>scm:git:git://git.shopzilla.com/site/sharedweb/wadl-doc</connection>
+  <url>http://github.com/shopzilla/ducky</url>
+  <scm>
+      <url>http://github.com/shopzilla/ducky</url>
+      <connection>scm:git:git@github.com:shopzilla/ducky.git</connection>
+      <developerConnection>scm:git:git@github.com:shopzilla/ducky.git</developerConnection>
   </scm>
   <dependencies>
     <dependency>
